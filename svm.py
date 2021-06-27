@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import pickle
 import base64
+import numpy as np
 
 #Creating the UI for the application:
 
@@ -73,15 +74,24 @@ Ppe = st.number_input("Enter the 	Pitch period entropy : ", key = "Ppe",format="
 
 #load pickle file
 svm_classifier = open('svm_model.pkl','rb')
+std = open('std_scalar.pkl','rb')
 classifier = pickle.load(svm_classifier)
+std_scalar = pickle.load(std)
 #############################################
-
 #predict the result
 submit = st.button("Analyze")
 if submit:
-    result = classifier.predict([[MDVP_Fo_Hz,MDVP_Fhi_Hz,MDVP_Flo_Hz,MDVP_Jitter_percent,MDVP_Jitter_Abs,MDVP_Rap,MDVP_Ppq,Jitter_DDP,MDVP_Shimmer,MDVP_Shimmer_dB,Shimmer_APQ3,Shimmer_APQ5,MDVP_Apq,Shimmer_DDA,Nhr,Hnr,Rpde,Dfa,spread1,spread2,d2,Ppe]])
-    print(result)
-    if result == 0:
+    result=(MDVP_Fo_Hz,MDVP_Fhi_Hz,MDVP_Flo_Hz,MDVP_Jitter_percent,MDVP_Jitter_Abs,MDVP_Rap,MDVP_Ppq,Jitter_DDP,MDVP_Shimmer,MDVP_Shimmer_dB,Shimmer_APQ3,Shimmer_APQ5,MDVP_Apq,Shimmer_DDA,Nhr,Hnr,Rpde,Dfa,spread1,spread2,d2,Ppe)
+    result = np.asarray(result)
+    input_reshaped = result.reshape(1,-1)
+
+    # standardize the data
+    std_input = std_scalar.transform(input_reshaped)
+
+    res=classifier.predict(std_input)
+
+    print(res)
+    if res == [0]:
         st.balloons()
         st.success("It is predicted that you may not have Parkinsons Disease")
     else:
